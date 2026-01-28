@@ -1,0 +1,46 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ============================================
+    // REGLAS DE FIREBASE - App de Reuniones
+    // ============================================
+
+    // Users - Allow authenticated users to manage their own data
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update: if request.auth != null && request.auth.uid == userId;
+      allow delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Organizations
+    match /organizations/{orgId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+      allow delete: if request.auth != null;
+    }
+
+    // Actas - Lectura publica para firmas, escritura autenticada
+    match /actas/{actaId} {
+      // Permitir lectura publica (necesario para pagina de firma publica)
+      allow read: if true;
+      // Solo usuarios autenticados pueden crear/eliminar
+      allow create: if request.auth != null;
+      allow delete: if request.auth != null;
+      // Permitir actualizacion autenticada O actualizacion de firma publica
+      // (la validacion del token se hace en Cloud Functions)
+      allow update: if request.auth != null ||
+        // Permitir actualizacion publica solo si solo cambia attendees (para firmas)
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['attendees', 'status', 'updatedAt']));
+    }
+
+    // Signature Tokens
+    match /signatureTokens/{tokenId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+  }
+}
