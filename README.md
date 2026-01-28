@@ -58,7 +58,7 @@ VITE_FIREBASE_PROJECT_ID=tu-proyecto-id
 VITE_FIREBASE_STORAGE_BUCKET=tu-proyecto.appspot.com
 VITE_FIREBASE_MESSAGING_SENDER_ID=tu-sender-id
 VITE_FIREBASE_APP_ID=tu-app-id
-VITE_GEMINI_API_KEY=tu-gemini-api-key
+GEMINI_API_KEY=tu-gemini-api-key
 ```
 
 ## Scripts Disponibles
