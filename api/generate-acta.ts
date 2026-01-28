@@ -26,10 +26,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     })
   }
 
-  const body = req.body as RequestBody
+  let body: RequestBody
+  try {
+    body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body
+  } catch {
+    return res.status(400).json({ error: 'El cuerpo de la solicitud no es JSON valido.' })
+  }
 
-  if (!body.title || !body.rawContent) {
-    return res.status(400).json({ error: 'Faltan campos requeridos: title y rawContent.' })
+  if (!body || !body.title) {
+    return res.status(400).json({ error: 'Falta el campo requerido: title.' })
   }
 
   const attendeesList = (body.attendees || [])
