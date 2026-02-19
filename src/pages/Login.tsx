@@ -24,7 +24,6 @@ import {
   Download,
   Loader2,
   User,
-  Sparkles,
 } from 'lucide-react'
 
 export default function Login() {
@@ -64,12 +63,15 @@ export default function Login() {
       navigate('/dashboard')
     } catch (err: any) {
       console.error(err)
-      if (err.code === 'auth/user-not-found') {
-        setError('Usuario no encontrado. Registrate primero.')
-      } else if (err.code === 'auth/wrong-password') {
-        setError('Contrasena incorrecta.')
+      if (
+        err.code === 'auth/user-not-found' ||
+        err.code === 'auth/wrong-password' ||
+        err.code === 'auth/invalid-credential' ||
+        err.code === 'auth/invalid-login-credentials'
+      ) {
+        setError('Correo o contrasena incorrectos. Si no tienes cuenta ve a Registrate.')
       } else {
-        setError('Error al iniciar sesion. Revisa tus credenciales.')
+        setError('Error al iniciar sesion: ' + (err.message || err.code))
       }
     } finally {
       setLoading(false)
@@ -152,22 +154,31 @@ export default function Login() {
 
         {/* Brand */}
         <div className="relative z-10 flex items-center gap-3">
-          <div className="w-9 h-9 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/20">
-            <Sparkles className="w-5 h-5 text-white" />
+          <img
+            src="/logo-serviciudad.png"
+            alt="SERVICIUDAD E.S.P."
+            className="w-10 h-10 object-contain"
+          />
+          <div>
+            <span className="text-white font-bold text-lg tracking-tight leading-tight block">
+              SERVICIUDAD E.S.P.
+            </span>
+            <span className="text-slate-400 text-xs tracking-wide">
+              Acueducto · Aseo · Alcantarillado
+            </span>
           </div>
-          <span className="text-white font-semibold text-lg tracking-tight">MeetMind AI</span>
         </div>
 
         {/* Hero */}
         <div className="relative z-10 space-y-8">
           <div className="space-y-4">
             <h1 className="text-4xl font-bold text-white leading-tight">
-              Transforma tus reuniones en{' '}
-              <span className="text-blue-300">actas profesionales</span>
+              Gestion de actas de reunion{' '}
+              <span className="text-blue-300">oficial e inteligente</span>
             </h1>
             <p className="text-slate-400 text-lg leading-relaxed">
-              Inteligencia artificial que documenta, organiza y comparte lo que importa de cada
-              reunion.
+              Plataforma institucional para documentar, organizar y firmar las actas de
+              los comites y reuniones de SERVICIUDAD E.S.P.
             </p>
           </div>
           <div className="space-y-4">
@@ -176,9 +187,9 @@ export default function Login() {
                 <FileText className="w-4 h-4 text-blue-300" />
               </div>
               <div>
-                <p className="text-white font-medium text-sm">Actas automaticas</p>
+                <p className="text-white font-medium text-sm">Actas automaticas con IA</p>
                 <p className="text-slate-400 text-sm">
-                  Genera actas estructuradas en segundos con IA
+                  Redaccion profesional a partir de notas o audio
                 </p>
               </div>
             </div>
@@ -187,9 +198,9 @@ export default function Login() {
                 <Mic className="w-4 h-4 text-blue-300" />
               </div>
               <div>
-                <p className="text-white font-medium text-sm">Transcripcion inteligente</p>
+                <p className="text-white font-medium text-sm">Firmas digitales</p>
                 <p className="text-slate-400 text-sm">
-                  Convierte audio y notas en texto organizado
+                  Los asistentes firman directamente en la plataforma
                 </p>
               </div>
             </div>
@@ -198,9 +209,9 @@ export default function Login() {
                 <Download className="w-4 h-4 text-blue-300" />
               </div>
               <div>
-                <p className="text-white font-medium text-sm">Exportacion facil</p>
+                <p className="text-white font-medium text-sm">Exportacion PDF y Word</p>
                 <p className="text-slate-400 text-sm">
-                  Descarga en PDF o comparte con un click
+                  Con encabezado oficial GGFO-02 listo para archivar
                 </p>
               </div>
             </div>
@@ -209,7 +220,7 @@ export default function Login() {
 
         {/* Footer */}
         <p className="relative z-10 text-slate-500 text-xs">
-          © 2026 MeetMind AI. Todos los derechos reservados.
+          © 2026 SERVICIUDAD E.S.P. Todos los derechos reservados.
         </p>
       </div>
 
@@ -217,11 +228,16 @@ export default function Login() {
       <div className="flex-1 lg:w-1/2 flex items-center justify-center p-6 bg-white min-h-screen lg:min-h-0">
         <div className="w-full max-w-sm space-y-6">
           {/* Mobile logo */}
-          <div className="flex lg:hidden items-center gap-2 justify-center mb-2">
-            <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-primary" />
-            </div>
-            <span className="font-semibold text-base tracking-tight">MeetMind AI</span>
+          <div className="flex lg:hidden flex-col items-center gap-1 mb-2">
+            <img
+              src="/logo-serviciudad.png"
+              alt="SERVICIUDAD E.S.P."
+              className="w-12 h-12 object-contain"
+            />
+            <span className="font-bold text-base tracking-tight text-slate-900">
+              SERVICIUDAD E.S.P.
+            </span>
+            <span className="text-xs text-slate-400">Acueducto · Aseo · Alcantarillado</span>
           </div>
 
           {/* Demo banner */}
