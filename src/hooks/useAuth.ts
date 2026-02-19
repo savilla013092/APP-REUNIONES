@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { onAuthStateChanged } from 'firebase/auth'
 import { auth, db, isFirebaseConfigured } from '../services/firebase'
-import { doc, getDoc } from 'firebase/firestore'
+import { doc, getDoc, setDoc, Timestamp } from 'firebase/firestore'
 import type { User } from '../types'
 
 interface AuthState {
@@ -36,14 +36,26 @@ export const initializeAuth = () => {
   onAuthStateChanged(auth, async firebaseUser => {
     if (firebaseUser) {
       try {
-        const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid))
-        if (userDoc.exists()) {
-          setUser({ id: firebaseUser.uid, ...userDoc.data() } as User)
-        } else {
-          // If user exists in Auth but not in Firestore yet (e.g. during registration)
-          // we might want to handle this differently
-          setUser(null)
+        const userRef = doc(db, 'users', firebaseUser.uid)
+        let userDoc = await getDoc(userRef)
+
+        // Document missing → create it automatically so the user can enter
+        if (!userDoc.exists()) {
+          const displayName =
+            firebaseUser.displayName ||
+            (firebaseUser.email ? firebaseUser.email.split('@')[0] : 'Usuario')
+          await setDoc(userRef, {
+            email: firebaseUser.email || '',
+            displayName,
+            organizationId: 'org-' + firebaseUser.uid.substring(0, 8),
+            role: 'admin',
+            createdAt: Timestamp.now(),
+            lastLoginAt: Timestamp.now(),
+          })
+          userDoc = await getDoc(userRef)
         }
+
+        setUser({ id: firebaseUser.uid, ...userDoc.data() } as User)
       } catch (error) {
         console.error('Error fetching user data:', error)
         setUser(null)
