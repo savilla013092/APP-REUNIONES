@@ -1,7 +1,5 @@
 import {
   Document,
-  Header,
-  PageNumber,
   Packer,
   Paragraph,
   TextRun,
@@ -11,9 +9,6 @@ import {
   WidthType,
   AlignmentType,
   ImageRun,
-  ShadingType,
-  VerticalAlign,
-  BorderStyle,
 } from 'docx'
 import { saveAs } from 'file-saver'
 import type { Acta } from '../types'
@@ -33,28 +28,13 @@ const getBlobFromUrl = async (url: string) => {
   return await response.blob()
 }
 
-// ── Cell factory helpers ──────────────────────────────────────────────────────
-const headerCell = (text: string, widthPct?: number) =>
+const cell = (text: string, bold = false, color = '000000', widthPct?: number) =>
   new TableCell({
     width: widthPct ? { size: widthPct, type: WidthType.PERCENTAGE } : undefined,
-    shading: { fill: '1E3A8A', type: ShadingType.CLEAR, color: 'auto' },
-    verticalAlign: VerticalAlign.CENTER,
     children: [
       new Paragraph({
-        children: [new TextRun({ text, bold: true, color: 'FFFFFF', size: 18 })],
+        children: [new TextRun({ text, bold, color, size: 18 })],
         alignment: AlignmentType.CENTER,
-        spacing: { before: 60, after: 60 },
-      }),
-    ],
-  })
-
-const bodyCell = (text: string, widthPct?: number) =>
-  new TableCell({
-    width: widthPct ? { size: widthPct, type: WidthType.PERCENTAGE } : undefined,
-    verticalAlign: VerticalAlign.CENTER,
-    children: [
-      new Paragraph({
-        children: [new TextRun({ text, size: 18 })],
         spacing: { before: 60, after: 60 },
       }),
     ],
@@ -62,8 +42,6 @@ const bodyCell = (text: string, widthPct?: number) =>
 
 const labelCell = (text: string) =>
   new TableCell({
-    shading: { fill: 'EFF6FF', type: ShadingType.CLEAR, color: 'auto' },
-    verticalAlign: VerticalAlign.CENTER,
     children: [
       new Paragraph({
         children: [new TextRun({ text, bold: true, color: '1E3A8A', size: 18 })],
@@ -74,7 +52,6 @@ const labelCell = (text: string) =>
 
 const valueCell = (text: string) =>
   new TableCell({
-    verticalAlign: VerticalAlign.CENTER,
     children: [
       new Paragraph({
         children: [new TextRun({ text, size: 18 })],
@@ -85,154 +62,18 @@ const valueCell = (text: string) =>
 
 const sectionTitle = (text: string) =>
   new Paragraph({
-    children: [new TextRun({ text, bold: true, color: '1E3A8A', size: 22 })],
+    children: [new TextRun({ text, bold: true, color: '1E3A8A', size: 24 })],
     spacing: { before: 320, after: 120 },
-    border: {
-      bottom: { style: BorderStyle.SINGLE, size: 6, space: 4, color: '2563EB' },
-    },
   })
 
-const spacer = () => new Paragraph({ spacing: { after: 200 } })
-
-// ── Build the company header table (used in Word's native Header) ─────────────
-const buildCompanyHeaderTable = (logoArrayBuffer: ArrayBuffer | null): Table => {
-  // Logo cell content
-  const logoCellContent = logoArrayBuffer
-    ? [
-        new Paragraph({
-          children: [
-            new ImageRun({
-              data: logoArrayBuffer,
-              transformation: { width: 90, height: 48 },
-              type: 'png',
-            }),
-          ],
-          alignment: AlignmentType.CENTER,
-        }),
-      ]
-    : [
-        new Paragraph({
-          children: [new TextRun({ text: 'SERVICIUDAD', bold: true, size: 16, color: '1E293B' })],
-          alignment: AlignmentType.CENTER,
-          spacing: { before: 40 },
-        }),
-        new Paragraph({
-          children: [new TextRun({ text: 'ACUEDUCTO · ASEO', size: 11, color: '666666' })],
-          alignment: AlignmentType.CENTER,
-        }),
-        new Paragraph({
-          children: [new TextRun({ text: 'ALCANTARILLADO E.S.P.', size: 11, color: '666666' })],
-          alignment: AlignmentType.CENTER,
-          spacing: { after: 40 },
-        }),
-      ]
-
-  return new Table({
-    width: { size: 100, type: WidthType.PERCENTAGE },
-    rows: [
-      // Row 1: Logo | Company Name | Código | Versión
-      new TableRow({
-        children: [
-          new TableCell({
-            width: { size: 22, type: WidthType.PERCENTAGE },
-            rowSpan: 2,
-            verticalAlign: VerticalAlign.CENTER,
-            children: logoCellContent,
-          }),
-          new TableCell({
-            width: { size: 55, type: WidthType.PERCENTAGE },
-            verticalAlign: VerticalAlign.CENTER,
-            children: [
-              new Paragraph({
-                children: [new TextRun({ text: CO_NAME, bold: true, size: 26, color: '0F172A' })],
-                alignment: AlignmentType.CENTER,
-                spacing: { before: 60 },
-              }),
-              new Paragraph({
-                children: [new TextRun({ text: CO_NIT, size: 16, color: '666666' })],
-                alignment: AlignmentType.CENTER,
-                spacing: { after: 60 },
-              }),
-            ],
-          }),
-          new TableCell({
-            width: { size: 12, type: WidthType.PERCENTAGE },
-            verticalAlign: VerticalAlign.CENTER,
-            children: [
-              new Paragraph({
-                children: [new TextRun({ text: 'Código', size: 14, color: '888888' })],
-                alignment: AlignmentType.CENTER,
-              }),
-              new Paragraph({
-                children: [new TextRun({ text: CO_CODE, bold: true, size: 18, color: '0F172A' })],
-                alignment: AlignmentType.CENTER,
-                spacing: { after: 40 },
-              }),
-            ],
-          }),
-          new TableCell({
-            width: { size: 11, type: WidthType.PERCENTAGE },
-            verticalAlign: VerticalAlign.CENTER,
-            children: [
-              new Paragraph({
-                children: [new TextRun({ text: 'Versión', size: 14, color: '888888' })],
-                alignment: AlignmentType.CENTER,
-              }),
-              new Paragraph({
-                children: [new TextRun({ text: CO_VERSION, bold: true, size: 18, color: '0F172A' })],
-                alignment: AlignmentType.CENTER,
-                spacing: { after: 40 },
-              }),
-            ],
-          }),
-        ],
-      }),
-      // Row 2: [Logo continues] | Doc type | Página
-      new TableRow({
-        children: [
-          new TableCell({
-            width: { size: 55, type: WidthType.PERCENTAGE },
-            verticalAlign: VerticalAlign.CENTER,
-            children: [
-              new Paragraph({
-                children: [new TextRun({ text: CO_DOC, size: 20, color: '333333' })],
-                alignment: AlignmentType.CENTER,
-                spacing: { before: 60, after: 60 },
-              }),
-            ],
-          }),
-          new TableCell({
-            columnSpan: 2,
-            width: { size: 23, type: WidthType.PERCENTAGE },
-            verticalAlign: VerticalAlign.CENTER,
-            children: [
-              new Paragraph({
-                children: [new TextRun({ text: 'Página', size: 14, color: '888888' })],
-                alignment: AlignmentType.CENTER,
-              }),
-              new Paragraph({
-                children: [
-                  new TextRun({ text: '', size: 16, bold: true }),
-                  new TextRun({ children: [PageNumber.CURRENT], size: 16, bold: true }),
-                  new TextRun({ text: ' de ', size: 16, color: '666666' }),
-                  new TextRun({ children: [PageNumber.TOTAL_PAGES], size: 16, bold: true }),
-                ],
-                alignment: AlignmentType.CENTER,
-                spacing: { after: 40 },
-              }),
-            ],
-          }),
-        ],
-      }),
-    ],
-  })
-}
+const spacer = () => new Paragraph({ spacing: { after: 180 } })
 
 // ── Main export ───────────────────────────────────────────────────────────────
 export const generateActaWord = async (acta: Acta) => {
   const meetingDate = acta.meetingInfo.date.toDate()
   const modalidad =
     acta.meetingInfo.modality.charAt(0).toUpperCase() + acta.meetingInfo.modality.slice(1)
+  const generatedAt = format(new Date(), "d 'de' MMMM 'de' yyyy, HH:mm", { locale: es })
 
   // Load company logo (optional)
   let logoArrayBuffer: ArrayBuffer | null = null
@@ -240,27 +81,138 @@ export const generateActaWord = async (acta: Acta) => {
     const blob = await getBlobFromUrl('/logo-serviciudad.png')
     logoArrayBuffer = await blob.arrayBuffer()
   } catch {
-    // No logo file yet
+    // No logo file — continue without it
   }
 
-  const sections: any[] = []
+  const children: any[] = []
+
+  // ── COMPANY HEADER TABLE ───────────────────────────────────────────────────
+  const logoCellContent = logoArrayBuffer
+    ? new TableCell({
+        width: { size: 22, type: WidthType.PERCENTAGE },
+        children: [
+          new Paragraph({
+            children: [
+              new ImageRun({
+                data: logoArrayBuffer,
+                transformation: { width: 80, height: 40 },
+                type: 'png',
+              }),
+            ],
+            alignment: AlignmentType.CENTER,
+          }),
+        ],
+      })
+    : new TableCell({
+        width: { size: 22, type: WidthType.PERCENTAGE },
+        children: [
+          new Paragraph({
+            children: [new TextRun({ text: CO_NAME, bold: true, size: 14, color: '1E293B' })],
+            alignment: AlignmentType.CENTER,
+          }),
+        ],
+      })
+
+  children.push(
+    new Table({
+      width: { size: 100, type: WidthType.PERCENTAGE },
+      rows: [
+        new TableRow({
+          children: [
+            logoCellContent,
+            new TableCell({
+              width: { size: 55, type: WidthType.PERCENTAGE },
+              children: [
+                new Paragraph({
+                  children: [new TextRun({ text: CO_NAME, bold: true, size: 28, color: '0F172A' })],
+                  alignment: AlignmentType.CENTER,
+                  spacing: { before: 40 },
+                }),
+                new Paragraph({
+                  children: [new TextRun({ text: CO_NIT, size: 16, color: '666666' })],
+                  alignment: AlignmentType.CENTER,
+                  spacing: { after: 40 },
+                }),
+              ],
+            }),
+            new TableCell({
+              width: { size: 13, type: WidthType.PERCENTAGE },
+              children: [
+                new Paragraph({
+                  children: [new TextRun({ text: 'Código', size: 14, color: '888888' })],
+                  alignment: AlignmentType.CENTER,
+                }),
+                new Paragraph({
+                  children: [new TextRun({ text: CO_CODE, bold: true, size: 18 })],
+                  alignment: AlignmentType.CENTER,
+                }),
+              ],
+            }),
+            new TableCell({
+              width: { size: 10, type: WidthType.PERCENTAGE },
+              children: [
+                new Paragraph({
+                  children: [new TextRun({ text: 'Versión', size: 14, color: '888888' })],
+                  alignment: AlignmentType.CENTER,
+                }),
+                new Paragraph({
+                  children: [new TextRun({ text: CO_VERSION, bold: true, size: 18 })],
+                  alignment: AlignmentType.CENTER,
+                }),
+              ],
+            }),
+          ],
+        }),
+        new TableRow({
+          children: [
+            new TableCell({
+              width: { size: 22, type: WidthType.PERCENTAGE },
+              children: [new Paragraph({ children: [new TextRun({ text: '' })] })],
+            }),
+            new TableCell({
+              width: { size: 55, type: WidthType.PERCENTAGE },
+              children: [
+                new Paragraph({
+                  children: [new TextRun({ text: CO_DOC, size: 20, color: '333333' })],
+                  alignment: AlignmentType.CENTER,
+                  spacing: { before: 40, after: 40 },
+                }),
+              ],
+            }),
+            new TableCell({
+              columnSpan: 2,
+              width: { size: 23, type: WidthType.PERCENTAGE },
+              children: [
+                new Paragraph({
+                  children: [new TextRun({ text: 'Generado: ' + generatedAt, size: 14, color: '888888' })],
+                  alignment: AlignmentType.CENTER,
+                  spacing: { before: 40, after: 40 },
+                }),
+              ],
+            }),
+          ],
+        }),
+      ],
+    }),
+    spacer()
+  )
 
   // ── MEETING TITLE ──────────────────────────────────────────────────────────
-  sections.push(
+  children.push(
     new Paragraph({
-      children: [new TextRun({ text: 'ACTA DE REUNIÓN', bold: true, size: 32, color: '1E3A8A' })],
+      children: [new TextRun({ text: 'ACTA DE REUNIÓN', bold: true, size: 36, color: '1E3A8A' })],
       alignment: AlignmentType.CENTER,
       spacing: { after: 120 },
     }),
     new Paragraph({
-      children: [new TextRun({ text: acta.meetingInfo.title, bold: true, size: 26, color: '1E293B' })],
+      children: [new TextRun({ text: acta.meetingInfo.title, bold: true, size: 28, color: '1E293B' })],
       alignment: AlignmentType.CENTER,
       spacing: { after: 400 },
     })
   )
 
   // ── MEETING INFO TABLE ─────────────────────────────────────────────────────
-  sections.push(
+  children.push(
     new Table({
       width: { size: 100, type: WidthType.PERCENTAGE },
       rows: [
@@ -289,9 +241,9 @@ export const generateActaWord = async (acta: Acta) => {
 
   // ── AGENDA ─────────────────────────────────────────────────────────────────
   if (acta.agenda?.length > 0) {
-    sections.push(sectionTitle('ORDEN DEL DÍA'))
+    children.push(sectionTitle('ORDEN DEL DÍA'))
     acta.agenda.forEach((item, i) => {
-      sections.push(
+      children.push(
         new Paragraph({
           children: [
             new TextRun({ text: `${i + 1}.  `, bold: true, color: '2563EB', size: 20 }),
@@ -301,40 +253,38 @@ export const generateActaWord = async (acta: Acta) => {
         })
       )
     })
-    sections.push(spacer())
+    children.push(spacer())
   }
 
   // ── ATTENDEES TABLE ────────────────────────────────────────────────────────
   if (acta.attendees?.length > 0) {
-    sections.push(sectionTitle('LISTA DE ASISTENTES'))
+    children.push(sectionTitle('LISTA DE ASISTENTES'))
     const attendanceLabel: Record<string, string> = {
       present: 'Presente',
       absent: 'Ausente',
       excused: 'Justificado',
     }
-    sections.push(
+    children.push(
       new Table({
         width: { size: 100, type: WidthType.PERCENTAGE },
         rows: [
           new TableRow({
-            tableHeader: true,
             children: [
-              headerCell('Nombre', 28),
-              headerCell('Cargo', 26),
-              headerCell('Correo', 32),
-              headerCell('Asistencia', 14),
+              cell('Nombre', true, 'FFFFFF', 28),
+              cell('Cargo', true, 'FFFFFF', 26),
+              cell('Correo', true, 'FFFFFF', 32),
+              cell('Asistencia', true, 'FFFFFF', 14),
             ],
           }),
-          ...acta.attendees.map(
-            a =>
-              new TableRow({
-                children: [
-                  bodyCell(a.name, 28),
-                  bodyCell(a.role, 26),
-                  bodyCell(a.email || '—', 32),
-                  bodyCell(attendanceLabel[a.attendance] || a.attendance, 14),
-                ],
-              })
+          ...acta.attendees.map(a =>
+            new TableRow({
+              children: [
+                cell(a.name, false, '000000', 28),
+                cell(a.role, false, '000000', 26),
+                cell(a.email || '—', false, '000000', 32),
+                cell(attendanceLabel[a.attendance] || a.attendance, false, '000000', 14),
+              ],
+            })
           ),
         ],
       }),
@@ -344,7 +294,7 @@ export const generateActaWord = async (acta: Acta) => {
 
   // ── 1. PREÁMBULO ───────────────────────────────────────────────────────────
   if (acta.generatedContent?.introduction) {
-    sections.push(
+    children.push(
       sectionTitle('1.  PREÁMBULO'),
       new Paragraph({
         children: [new TextRun({ text: acta.generatedContent.introduction, size: 20 })],
@@ -356,7 +306,7 @@ export const generateActaWord = async (acta: Acta) => {
 
   // ── 2. DESARROLLO ──────────────────────────────────────────────────────────
   if (acta.generatedContent?.development) {
-    sections.push(
+    children.push(
       sectionTitle('2.  DESARROLLO DE LA REUNIÓN'),
       new Paragraph({
         children: [new TextRun({ text: acta.generatedContent.development, size: 20 })],
@@ -368,9 +318,9 @@ export const generateActaWord = async (acta: Acta) => {
 
   // ── 3. ACUERDOS ────────────────────────────────────────────────────────────
   if (acta.generatedContent?.agreements?.length) {
-    sections.push(sectionTitle('3.  ACUERDOS Y DECISIONES'))
+    children.push(sectionTitle('3.  ACUERDOS Y DECISIONES'))
     acta.generatedContent.agreements.forEach((agreement, i) => {
-      sections.push(
+      children.push(
         new Paragraph({
           children: [
             new TextRun({ text: `${i + 1}.  `, bold: true, color: '2563EB', size: 20 }),
@@ -380,37 +330,38 @@ export const generateActaWord = async (acta: Acta) => {
         })
       )
     })
-    sections.push(spacer())
+    children.push(spacer())
   }
 
   // ── 4. COMPROMISOS ─────────────────────────────────────────────────────────
   if (acta.generatedContent?.commitments?.length) {
-    sections.push(sectionTitle('4.  COMPROMISOS Y TAREAS'))
-    sections.push(
+    children.push(sectionTitle('4.  COMPROMISOS Y TAREAS'))
+    children.push(
       new Table({
         width: { size: 100, type: WidthType.PERCENTAGE },
         rows: [
           new TableRow({
-            tableHeader: true,
             children: [
-              headerCell('#', 6),
-              headerCell('Descripción del Compromiso', 52),
-              headerCell('Responsable', 28),
-              headerCell('Vencimiento', 14),
+              cell('#', true, 'FFFFFF', 6),
+              cell('Descripción del Compromiso', true, 'FFFFFF', 52),
+              cell('Responsable', true, 'FFFFFF', 28),
+              cell('Vencimiento', true, 'FFFFFF', 14),
             ],
           }),
           ...acta.generatedContent.commitments.map((c, i) =>
             new TableRow({
               children: [
-                bodyCell(`${i + 1}`, 6),
-                bodyCell(c.description, 52),
-                bodyCell(c.responsible, 28),
-                bodyCell(
+                cell(`${i + 1}`, false, '000000', 6),
+                cell(c.description, false, '000000', 52),
+                cell(c.responsible, false, '000000', 28),
+                cell(
                   c.dueDate
                     ? (c.dueDate as any).toDate
                       ? format((c.dueDate as any).toDate(), 'dd/MM/yyyy')
                       : String(c.dueDate)
                     : '—',
+                  false,
+                  '000000',
                   14
                 ),
               ],
@@ -424,7 +375,7 @@ export const generateActaWord = async (acta: Acta) => {
 
   // ── 5. CIERRE ──────────────────────────────────────────────────────────────
   if (acta.generatedContent?.closure) {
-    sections.push(
+    children.push(
       sectionTitle('5.  CIERRE'),
       new Paragraph({
         children: [new TextRun({ text: acta.generatedContent.closure, size: 20 })],
@@ -438,7 +389,7 @@ export const generateActaWord = async (acta: Acta) => {
   if (acta.generatedContent?.nextMeeting) {
     const nm = acta.generatedContent.nextMeeting
     const nmDate = (nm.date as any)?.toDate ? (nm.date as any).toDate() : nm.date
-    sections.push(
+    children.push(
       sectionTitle('6.  PRÓXIMA REUNIÓN'),
       new Paragraph({
         children: [
@@ -453,14 +404,14 @@ export const generateActaWord = async (acta: Acta) => {
   }
 
   // ── FIRMAS ─────────────────────────────────────────────────────────────────
-  sections.push(sectionTitle('FIRMAS DE LOS ASISTENTES'))
+  children.push(sectionTitle('FIRMAS DE LOS ASISTENTES'))
 
   for (const attendee of acta.attendees) {
     if (attendee.signatureUrl) {
       try {
         const blob        = await getBlobFromUrl(attendee.signatureUrl)
         const arrayBuffer = await blob.arrayBuffer()
-        sections.push(
+        children.push(
           new Paragraph({
             children: [
               new ImageRun({ data: arrayBuffer, transformation: { width: 150, height: 60 }, type: 'png' }),
@@ -469,7 +420,7 @@ export const generateActaWord = async (acta: Acta) => {
           })
         )
       } catch {
-        sections.push(
+        children.push(
           new Paragraph({
             children: [new TextRun({ text: '_'.repeat(28), color: 'AAAAAA' })],
             spacing: { before: 240 },
@@ -477,7 +428,7 @@ export const generateActaWord = async (acta: Acta) => {
         )
       }
     } else {
-      sections.push(
+      children.push(
         new Paragraph({
           children: [new TextRun({ text: '_'.repeat(28), color: 'AAAAAA' })],
           spacing: { before: 240 },
@@ -485,7 +436,7 @@ export const generateActaWord = async (acta: Acta) => {
       )
     }
 
-    sections.push(
+    children.push(
       new Paragraph({ children: [new TextRun({ text: attendee.name, bold: true, size: 20 })] }),
       new Paragraph({ children: [new TextRun({ text: attendee.role, color: '64748B', size: 18 })] })
     )
@@ -494,16 +445,14 @@ export const generateActaWord = async (acta: Acta) => {
       const sAt = (attendee.signedAt as any).toDate
         ? (attendee.signedAt as any).toDate()
         : attendee.signedAt
-      sections.push(
+      children.push(
         new Paragraph({
-          children: [
-            new TextRun({ text: `✓ Firmado: ${format(sAt, 'dd/MM/yyyy HH:mm')}`, color: '16A34A', size: 16 }),
-          ],
+          children: [new TextRun({ text: `✓ Firmado: ${format(sAt, 'dd/MM/yyyy HH:mm')}`, color: '16A34A', size: 16 })],
           spacing: { after: 400 },
         })
       )
     } else {
-      sections.push(
+      children.push(
         new Paragraph({
           children: [new TextRun({ text: 'Pendiente de firma', color: 'F59E0B', italics: true, size: 16 })],
           spacing: { after: 400 },
@@ -512,20 +461,24 @@ export const generateActaWord = async (acta: Acta) => {
     }
   }
 
-  // ── BUILD DOCUMENT ─────────────────────────────────────────────────────────
-  const doc = new Document({
-    sections: [
-      {
-        headers: {
-          default: new Header({
-            children: [buildCompanyHeaderTable(logoArrayBuffer)],
-          }),
-        },
-        children: sections,
-      },
-    ],
-  })
+  // ── FOOTER NOTE ────────────────────────────────────────────────────────────
+  children.push(
+    spacer(),
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: `Documento generado por ${CO_NAME} — ${generatedAt}`,
+          color: 'AAAAAA',
+          italics: true,
+          size: 16,
+        }),
+      ],
+      alignment: AlignmentType.CENTER,
+    })
+  )
 
+  // ── BUILD & SAVE ───────────────────────────────────────────────────────────
+  const doc = new Document({ sections: [{ children }] })
   const blob = await Packer.toBlob(doc)
   saveAs(
     blob,
