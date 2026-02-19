@@ -196,10 +196,10 @@ export default function CreateActa() {
       }
 
       // 3. Save to Firestore (or localStorage in demo mode)
-      const actaData: any = {
-        organizationId: user.organizationId,
-        createdBy: user.id,
-        status: 'draft',
+      const actaData = {
+        organizationId: user.organizationId || 'demo-org-001',
+        createdBy: user.id || 'demo-user-001',
+        status: 'draft' as const,
         meetingInfo: {
           title: meetingData.title || '',
           date: createTimestamp(meetingData.date),
@@ -220,12 +220,13 @@ export default function CreateActa() {
       }
 
       const actaId = await saveActa(actaData)
+      console.log('Acta guardada con ID:', actaId)
 
       // 3. Navigate to view
       navigate(`/actas/view/${actaId}`)
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error completo:', error)
-      const errorMessage = error?.message || 'Error desconocido'
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido'
       alert(`Error al generar el acta: ${errorMessage}`)
     } finally {
       setGenerating(false)

@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { getActa, updateActa } from '@/services/actas'
 import { uploadSignature } from '@/services/storage'
@@ -50,11 +50,15 @@ export default function ViewActa() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [editedContent, setEditedContent] = useState<GeneratedContent | null>(null)
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
 
   // Signature state
   const [signingAttendeeId, setSigningAttendeeId] = useState<string | null>(null)
   const [savingSignature, setSavingSignature] = useState(false)
   const sigCanvas = useRef<SignatureCanvas>(null)
+
+  // Track original content for comparison
+  const [originalContent, setOriginalContent] = useState<GeneratedContent | null>(null)
 
   useEffect(() => {
     if (id) {
@@ -69,6 +73,7 @@ export default function ViewActa() {
         setActa(data)
         if (data.generatedContent) {
           setEditedContent(data.generatedContent)
+          setOriginalContent(data.generatedContent)
         }
       }
     } catch (error) {
@@ -78,11 +83,13 @@ export default function ViewActa() {
     }
   }
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     if (!id || !editedContent) return
     setSaving(true)
     try {
       await updateActa(id, { generatedContent: editedContent })
+      setOriginalContent(editedContent)
+      setHasUnsavedChanges(false)
       toast({
         title: 'Cambios guardados',
         description: 'El acta se ha actualizado correctamente.',
@@ -97,7 +104,46 @@ export default function ViewActa() {
     } finally {
       setSaving(false)
     }
-  }
+  }, [id, editedContent, toast])
+
+  // Auto-save with debounce when content changes
+  useEffect(() => {
+    if (!editedContent || !originalContent) return
+
+    const hasChanges = JSON.stringify(editedContent) !== JSON.stringify(originalContent)
+
+    if (hasChanges) {
+      setHasUnsavedChanges(true)
+
+      const debounceTimer = setTimeout(() => {
+        handleSave()
+      }, 2000)
+
+      return () => clearTimeout(debounceTimer)
+    }
+  }, [editedContent, originalContent, handleSave])
+
+  // Save on unmount if there are unsaved changes
+  useEffect(() => {
+    return () => {
+      if (hasUnsavedChanges && editedContent && id) {
+        updateActa(id, { generatedContent: editedContent }).catch(console.error)
+      }
+    }
+  }, [hasUnsavedChanges, editedContent, id])
+
+  // Warn user before leaving with unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault()
+        e.returnValue = ''
+      }
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [hasUnsavedChanges])
 
   const handleStartSignature = (attendeeId: string) => {
     setSigningAttendeeId(attendeeId)
@@ -211,6 +257,11 @@ export default function ViewActa() {
                   ? 'Pendiente Firmas'
                   : 'Borrador'}
             </Badge>
+            {hasUnsavedChanges && (
+              <Badge variant="outline" className="text-amber-600 border-amber-300">
+                Sin guardar
+              </Badge>
+            )}
           </div>
           <p className="text-slate-500 flex items-center gap-2">
             {format(meetingDate, 'PPPP', { locale: es })} • {acta.meetingInfo.startTime} -{' '}

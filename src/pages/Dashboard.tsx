@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore, signOutUser } from '@/hooks/useAuth'
 import { getOrganizationActas } from '@/services/actas'
 import type { Acta } from '@/types'
@@ -27,6 +27,7 @@ import { cn } from '@/lib/utils'
 export default function Dashboard() {
   const { user } = useAuthStore()
   const navigate = useNavigate()
+  const location = useLocation()
   const [actas, setActas] = useState<Acta[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -45,11 +46,19 @@ export default function Dashboard() {
     }
   }, [user, user?.organizationId])
 
+  // Reload actas when navigating back to dashboard
+  useEffect(() => {
+    if (user?.organizationId) {
+      loadActas(user.organizationId)
+    }
+  }, [location.key, user?.organizationId])
+
   const loadActas = async (orgId: string) => {
     setLoading(true)
     try {
+      console.log('Cargando actas para organizationId:', orgId)
       const data = await getOrganizationActas(orgId)
-      console.log('Actas cargadas:', data.length)
+      console.log('Actas cargadas:', data.length, data)
       setActas(data)
     } catch (error) {
       console.error('Error cargando actas:', error)
