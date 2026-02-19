@@ -10,7 +10,7 @@ import {
   updateProfile,
   sendPasswordResetEmail,
 } from 'firebase/auth'
-import { doc, setDoc, Timestamp } from 'firebase/firestore'
+import { doc, setDoc, getDoc, Timestamp } from 'firebase/firestore'
 import { useState } from 'react'
 import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { useMockLogin } from '@/hooks/useMockLogin'
@@ -78,7 +78,20 @@ export default function Login() {
     setLoading(true)
     setError('')
     try {
-      await signInWithEmailAndPassword(auth, email, password)
+      const credential = await signInWithEmailAndPassword(auth, email, password)
+
+      // Ensure Firestore user document exists (may be missing if account
+      // was created outside the app's register flow)
+      const userRef = doc(db, 'users', credential.user.uid)
+      const userSnap = await getDoc(userRef)
+      if (!userSnap.exists()) {
+        await createUserDocument(
+          credential.user.uid,
+          credential.user.email || email,
+          credential.user.displayName || email.split('@')[0]
+        )
+      }
+
       navigate('/dashboard')
     } catch (err: any) {
       console.error(err)
