@@ -10,6 +10,7 @@ import {
   WidthType,
   AlignmentType,
   ImageRun,
+  ShadingType,
 } from 'docx'
 import { saveAs } from 'file-saver'
 import type { Acta } from '../types'
@@ -21,211 +22,386 @@ const getBlobFromUrl = async (url: string) => {
   return await response.blob()
 }
 
+// ── Cell helpers ──────────────────────────────────────────────────────────────
+const headerCell = (text: string, widthPct?: number) =>
+  new TableCell({
+    width: widthPct ? { size: widthPct, type: WidthType.PERCENTAGE } : undefined,
+    shading: { fill: '1E3A8A', type: ShadingType.CLEAR, color: 'auto' },
+    children: [
+      new Paragraph({
+        children: [new TextRun({ text, bold: true, color: 'FFFFFF', size: 18 })],
+        spacing: { before: 80, after: 80 },
+      }),
+    ],
+  })
+
+const bodyCell = (text: string, widthPct?: number) =>
+  new TableCell({
+    width: widthPct ? { size: widthPct, type: WidthType.PERCENTAGE } : undefined,
+    children: [
+      new Paragraph({
+        children: [new TextRun({ text, size: 18 })],
+        spacing: { before: 60, after: 60 },
+      }),
+    ],
+  })
+
+const labelCell = (text: string) =>
+  new TableCell({
+    shading: { fill: 'EFF6FF', type: ShadingType.CLEAR, color: 'auto' },
+    children: [
+      new Paragraph({
+        children: [new TextRun({ text, bold: true, color: '2563EB', size: 18 })],
+        spacing: { before: 60, after: 60 },
+      }),
+    ],
+  })
+
+const valueCell = (text: string) =>
+  new TableCell({
+    children: [
+      new Paragraph({
+        children: [new TextRun({ text, size: 18 })],
+        spacing: { before: 60, after: 60 },
+      }),
+    ],
+  })
+
+const sectionTitle = (text: string) =>
+  new Paragraph({
+    children: [new TextRun({ text, bold: true, color: '1E3A8A', size: 22 })],
+    spacing: { before: 320, after: 120 },
+    border: {
+      bottom: { value: 'single', size: 6, space: 4, color: '2563EB' },
+    },
+  })
+
+const spacer = () => new Paragraph({ spacing: { after: 200 } })
+
+// ── Main export ───────────────────────────────────────────────────────────────
 export const generateActaWord = async (acta: Acta) => {
   const meetingDate = acta.meetingInfo.date.toDate()
+  const generatedAt = format(new Date(), "d 'de' MMMM 'de' yyyy, HH:mm", { locale: es })
+  const modalidad =
+    acta.meetingInfo.modality.charAt(0).toUpperCase() + acta.meetingInfo.modality.slice(1)
 
-  const sections = []
+  const sections: any[] = []
 
-  // Title
+  // ── TITLE ──────────────────────────────────────────────────────────────────
   sections.push(
     new Paragraph({
-      text: 'ACTA DE REUNIÓN',
-      heading: HeadingLevel.HEADING_1,
+      children: [new TextRun({ text: 'MeetMind AI', size: 18, color: '2563EB' })],
       alignment: AlignmentType.CENTER,
-      spacing: { after: 200 },
+      spacing: { after: 80 },
     }),
     new Paragraph({
-      text: acta.meetingInfo.title,
-      heading: HeadingLevel.HEADING_2,
+      children: [new TextRun({ text: 'ACTA DE REUNIÓN', bold: true, size: 36, color: '1E3A8A' })],
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 120 },
+    }),
+    new Paragraph({
+      children: [new TextRun({ text: acta.meetingInfo.title, bold: true, size: 28, color: '1E293B' })],
       alignment: AlignmentType.CENTER,
       spacing: { after: 400 },
     })
   )
 
-  // Information Table
-  const infoTable = new Table({
-    width: { size: 100, type: WidthType.PERCENTAGE },
-    rows: [
-      new TableRow({
-        children: [
-          new TableCell({
-            children: [new Paragraph({ children: [new TextRun({ text: 'Fecha:', bold: true })] })],
-          }),
-          new TableCell({ children: [new Paragraph(format(meetingDate, 'PPPP', { locale: es }))] }),
-        ],
-      }),
-      new TableRow({
-        children: [
-          new TableCell({
-            children: [new Paragraph({ children: [new TextRun({ text: 'Hora:', bold: true })] })],
-          }),
-          new TableCell({
-            children: [
-              new Paragraph(`${acta.meetingInfo.startTime} - ${acta.meetingInfo.endTime || 'N/A'}`),
-            ],
-          }),
-        ],
-      }),
-      new TableRow({
-        children: [
-          new TableCell({
-            children: [new Paragraph({ children: [new TextRun({ text: 'Lugar:', bold: true })] })],
-          }),
-          new TableCell({ children: [new Paragraph(acta.meetingInfo.location)] }),
-        ],
-      }),
-    ],
-  })
-
-  sections.push(infoTable, new Paragraph({ text: '', spacing: { before: 400 } }))
-
-  // Introduction
+  // ── MEETING INFO TABLE ─────────────────────────────────────────────────────
   sections.push(
-    new Paragraph({
-      text: '1. PREÁMBULO',
-      heading: HeadingLevel.HEADING_3,
-      spacing: { after: 120 },
+    new Table({
+      width: { size: 100, type: WidthType.PERCENTAGE },
+      rows: [
+        new TableRow({
+          children: [
+            labelCell('Fecha'),
+            valueCell(format(meetingDate, "EEEE d 'de' MMMM 'de' yyyy", { locale: es })),
+            labelCell('Modalidad'),
+            valueCell(modalidad),
+          ],
+        }),
+        new TableRow({
+          children: [
+            labelCell('Hora'),
+            valueCell(
+              `${acta.meetingInfo.startTime}${acta.meetingInfo.endTime ? ' – ' + acta.meetingInfo.endTime : ''}`
+            ),
+            labelCell('Lugar / Enlace'),
+            valueCell(acta.meetingInfo.location),
+          ],
+        }),
+      ],
     }),
-    new Paragraph({ text: acta.generatedContent?.introduction || '', spacing: { after: 300 } })
+    spacer()
   )
 
-  // Development
-  sections.push(
-    new Paragraph({
-      text: '2. DESARROLLO DE LA REUNIÓN',
-      heading: HeadingLevel.HEADING_3,
-      spacing: { after: 120 },
-    }),
-    new Paragraph({ text: acta.generatedContent?.development || '', spacing: { after: 300 } })
-  )
-
-  // Agreements
-  if (acta.generatedContent?.agreements.length) {
-    sections.push(
-      new Paragraph({
-        text: '3. ACUERDOS Y DECISIONES',
-        heading: HeadingLevel.HEADING_3,
-        spacing: { after: 120 },
-      })
-    )
-    acta.generatedContent.agreements.forEach((agreement, i) => {
+  // ── AGENDA ─────────────────────────────────────────────────────────────────
+  if (acta.agenda?.length > 0) {
+    sections.push(sectionTitle('ORDEN DEL DÍA'))
+    acta.agenda.forEach((item, i) => {
       sections.push(
         new Paragraph({
-          text: `${i + 1}. ${agreement}`,
-          bullet: { level: 0 },
+          children: [
+            new TextRun({ text: `${i + 1}.  `, bold: true, color: '2563EB', size: 20 }),
+            new TextRun({ text: item, size: 20 }),
+          ],
           spacing: { after: 100 },
         })
       )
     })
-    sections.push(new Paragraph({ text: '', spacing: { after: 200 } }))
+    sections.push(spacer())
   }
 
-  // Commitments
-  if (acta.generatedContent?.commitments.length) {
+  // ── ATTENDEES TABLE ────────────────────────────────────────────────────────
+  if (acta.attendees?.length > 0) {
+    sections.push(sectionTitle('LISTA DE ASISTENTES'))
+
+    const attendanceLabel: Record<string, string> = {
+      present: 'Presente',
+      absent: 'Ausente',
+      excused: 'Justificado',
+    }
+
+    sections.push(
+      new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        rows: [
+          new TableRow({
+            tableHeader: true,
+            children: [
+              headerCell('Nombre', 28),
+              headerCell('Rol / Cargo', 26),
+              headerCell('Correo', 32),
+              headerCell('Asistencia', 14),
+            ],
+          }),
+          ...acta.attendees.map(
+            a =>
+              new TableRow({
+                children: [
+                  bodyCell(a.name, 28),
+                  bodyCell(a.role, 26),
+                  bodyCell(a.email || '—', 32),
+                  bodyCell(attendanceLabel[a.attendance] || a.attendance, 14),
+                ],
+              })
+          ),
+        ],
+      }),
+      spacer()
+    )
+  }
+
+  // ── 1. PREÁMBULO ───────────────────────────────────────────────────────────
+  if (acta.generatedContent?.introduction) {
+    sections.push(
+      sectionTitle('1.  PREÁMBULO'),
+      new Paragraph({
+        children: [new TextRun({ text: acta.generatedContent.introduction, size: 20 })],
+        alignment: AlignmentType.JUSTIFIED,
+        spacing: { after: 300 },
+      })
+    )
+  }
+
+  // ── 2. DESARROLLO ──────────────────────────────────────────────────────────
+  if (acta.generatedContent?.development) {
+    sections.push(
+      sectionTitle('2.  DESARROLLO DE LA REUNIÓN'),
+      new Paragraph({
+        children: [new TextRun({ text: acta.generatedContent.development, size: 20 })],
+        alignment: AlignmentType.JUSTIFIED,
+        spacing: { after: 300 },
+      })
+    )
+  }
+
+  // ── 3. ACUERDOS ────────────────────────────────────────────────────────────
+  if (acta.generatedContent?.agreements?.length) {
+    sections.push(sectionTitle('3.  ACUERDOS Y DECISIONES'))
+    acta.generatedContent.agreements.forEach((agreement, i) => {
+      sections.push(
+        new Paragraph({
+          children: [
+            new TextRun({ text: `${i + 1}.  `, bold: true, color: '2563EB', size: 20 }),
+            new TextRun({ text: agreement, size: 20 }),
+          ],
+          spacing: { after: 120 },
+        })
+      )
+    })
+    sections.push(spacer())
+  }
+
+  // ── 4. COMPROMISOS ─────────────────────────────────────────────────────────
+  if (acta.generatedContent?.commitments?.length) {
+    sections.push(sectionTitle('4.  COMPROMISOS Y TAREAS'))
+    sections.push(
+      new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        rows: [
+          new TableRow({
+            tableHeader: true,
+            children: [
+              headerCell('#', 6),
+              headerCell('Descripción del Compromiso', 52),
+              headerCell('Responsable', 28),
+              headerCell('Vencimiento', 14),
+            ],
+          }),
+          ...acta.generatedContent.commitments.map((c, i) =>
+            new TableRow({
+              children: [
+                bodyCell(`${i + 1}`, 6),
+                bodyCell(c.description, 52),
+                bodyCell(c.responsible, 28),
+                bodyCell(
+                  c.dueDate
+                    ? (c.dueDate as any).toDate
+                      ? format((c.dueDate as any).toDate(), 'dd/MM/yyyy')
+                      : String(c.dueDate)
+                    : '—',
+                  14
+                ),
+              ],
+            })
+          ),
+        ],
+      }),
+      spacer()
+    )
+  }
+
+  // ── 5. CIERRE ──────────────────────────────────────────────────────────────
+  if (acta.generatedContent?.closure) {
+    sections.push(
+      sectionTitle('5.  CIERRE'),
+      new Paragraph({
+        children: [new TextRun({ text: acta.generatedContent.closure, size: 20 })],
+        alignment: AlignmentType.JUSTIFIED,
+        spacing: { after: 300 },
+      })
+    )
+  }
+
+  // ── 6. PRÓXIMA REUNIÓN ─────────────────────────────────────────────────────
+  if (acta.generatedContent?.nextMeeting) {
+    const nm = acta.generatedContent.nextMeeting
+    const nmDate = (nm.date as any)?.toDate ? (nm.date as any).toDate() : nm.date
+    sections.push(
+      sectionTitle('6.  PRÓXIMA REUNIÓN'),
+      new Paragraph({
+        children: [
+          new TextRun({ text: 'Fecha:  ', bold: true, color: '2563EB', size: 20 }),
+          new TextRun({
+            text: format(nmDate, "EEEE d 'de' MMMM 'de' yyyy", { locale: es }),
+            size: 20,
+          }),
+          new TextRun({ text: '     Lugar:  ', bold: true, color: '2563EB', size: 20 }),
+          new TextRun({ text: nm.location, size: 20 }),
+        ],
+        spacing: { after: 300 },
+      })
+    )
+  }
+
+  // ── FIRMAS ─────────────────────────────────────────────────────────────────
+  sections.push(sectionTitle('FIRMAS DE LOS ASISTENTES'))
+
+  // Show ALL attendees regardless of signature status
+  for (const attendee of acta.attendees) {
+    if (attendee.signatureUrl) {
+      try {
+        const blob = await getBlobFromUrl(attendee.signatureUrl)
+        const arrayBuffer = await blob.arrayBuffer()
+        sections.push(
+          new Paragraph({
+            children: [
+              new ImageRun({
+                data: arrayBuffer,
+                transformation: { width: 150, height: 60 },
+                type: 'png',
+              }),
+            ],
+            spacing: { before: 240 },
+          })
+        )
+      } catch {
+        sections.push(
+          new Paragraph({
+            children: [new TextRun({ text: '_'.repeat(28), color: 'AAAAAA' })],
+            spacing: { before: 240 },
+          })
+        )
+      }
+    } else {
+      sections.push(
+        new Paragraph({
+          children: [new TextRun({ text: '_'.repeat(28), color: 'AAAAAA' })],
+          spacing: { before: 240 },
+        })
+      )
+    }
+
     sections.push(
       new Paragraph({
-        text: '4. COMPROMISOS',
-        heading: HeadingLevel.HEADING_3,
-        spacing: { after: 120 },
+        children: [new TextRun({ text: attendee.name, bold: true, size: 20 })],
+      }),
+      new Paragraph({
+        children: [new TextRun({ text: attendee.role, color: '64748B', size: 18 })],
       })
     )
 
-    const commitmentRows = [
-      new TableRow({
-        children: [
-          new TableCell({
-            children: [
-              new Paragraph({ children: [new TextRun({ text: 'Compromiso', bold: true })] }),
-            ],
-          }),
-          new TableCell({
-            children: [
-              new Paragraph({ children: [new TextRun({ text: 'Responsable', bold: true })] }),
-            ],
-          }),
-          new TableCell({
-            children: [
-              new Paragraph({ children: [new TextRun({ text: 'Vencimiento', bold: true })] }),
-            ],
-          }),
-        ],
-      }),
-    ]
-
-    acta.generatedContent.commitments.forEach(c => {
-      commitmentRows.push(
-        new TableRow({
-          children: [
-            new TableCell({ children: [new Paragraph(c.description)] }),
-            new TableCell({ children: [new Paragraph(c.responsible)] }),
-            new TableCell({
-              children: [
-                new Paragraph(c.dueDate ? format((c.dueDate as any).toDate(), 'dd/MM/yyyy') : '-'),
-              ],
-            }),
-          ],
-        })
-      )
-    })
-
-    sections.push(
-      new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: commitmentRows }),
-      new Paragraph({ text: '', spacing: { before: 400 } })
-    )
-  }
-
-  // Signatures
-  sections.push(
-    new Paragraph({
-      text: 'FIRMAS ELECTRÓNICAS',
-      heading: HeadingLevel.HEADING_3,
-      spacing: { after: 200 },
-    })
-  )
-
-  const signedAttendees = acta.attendees.filter(a => a.signatureUrl)
-
-  for (const attendee of signedAttendees) {
-    try {
-      const blob = await getBlobFromUrl(attendee.signatureUrl!)
-      const arrayBuffer = await blob.arrayBuffer()
-
+    if (attendee.signedAt) {
+      const sAt = (attendee.signedAt as any).toDate
+        ? (attendee.signedAt as any).toDate()
+        : attendee.signedAt
       sections.push(
         new Paragraph({
           children: [
-            new ImageRun({
-              data: arrayBuffer,
-              transformation: { width: 150, height: 60 },
-              type: 'png',
+            new TextRun({
+              text: `✓ Firmado: ${format(sAt, 'dd/MM/yyyy HH:mm')}`,
+              color: '16A34A',
+              size: 16,
             }),
           ],
-        }),
-        new Paragraph({
-          children: [new TextRun({ text: attendee.name, bold: true })],
-        }),
-        new Paragraph({ text: attendee.role }),
-        new Paragraph({
-          text: `Firmado el: ${format((attendee.signedAt as any).toDate(), 'dd/MM/yyyy HH:mm')}`,
           spacing: { after: 400 },
         })
       )
-    } catch (e) {
+    } else {
       sections.push(
-        new Paragraph({ text: '__________________________', spacing: { before: 200 } }),
-        new Paragraph({ children: [new TextRun({ text: attendee.name, bold: true })] }),
-        new Paragraph({ text: attendee.role, spacing: { after: 400 } })
+        new Paragraph({
+          children: [
+            new TextRun({ text: 'Pendiente de firma', color: 'F59E0B', italics: true, size: 16 }),
+          ],
+          spacing: { after: 400 },
+        })
       )
     }
   }
 
+  // ── FOOTER NOTE ────────────────────────────────────────────────────────────
+  sections.push(
+    new Paragraph({ spacing: { before: 400 } }),
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: `Documento generado automáticamente con MeetMind AI el ${generatedAt}.`,
+          color: 'AAAAAA',
+          italics: true,
+          size: 16,
+        }),
+      ],
+      alignment: AlignmentType.CENTER,
+    })
+  )
+
   const doc = new Document({
-    sections: [
-      {
-        children: sections,
-      },
-    ],
+    sections: [{ children: sections }],
   })
 
   const blob = await Packer.toBlob(doc)
-  saveAs(blob, `Acta_${acta.meetingInfo.title.replace(/\s+/g, '_')}.docx`)
+  saveAs(
+    blob,
+    `Acta_${acta.meetingInfo.title.replace(/\s+/g, '_')}_${format(new Date(), 'yyyyMMdd')}.docx`
+  )
 }
