@@ -8,6 +8,7 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   updateProfile,
+  sendPasswordResetEmail,
 } from 'firebase/auth'
 import { doc, setDoc, Timestamp } from 'firebase/firestore'
 import { useState } from 'react'
@@ -36,7 +37,25 @@ export default function Login() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [resetSent, setResetSent] = useState(false)
   const navigate = useNavigate()
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      setError('Escribe tu correo electronico primero y luego haz clic en "Olvide mi contrasena".')
+      return
+    }
+    setLoading(true)
+    setError('')
+    try {
+      await sendPasswordResetEmail(auth, email)
+      setResetSent(true)
+    } catch (err: any) {
+      setError('No se pudo enviar el correo. Verifica que el correo este bien escrito.')
+    } finally {
+      setLoading(false)
+    }
+  }
   const { loginAsGuest } = useMockLogin()
 
   const createUserDocument = async (uid: string, email: string, name: string) => {
@@ -354,6 +373,31 @@ export default function Login() {
                 </p>
               )}
             </div>
+
+            {/* Forgot password link — only on login mode */}
+            {!isRegisterMode && isFirebaseConfigured && (
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  disabled={loading}
+                  className="text-xs text-primary hover:underline underline-offset-4 disabled:opacity-50"
+                >
+                  Olvide mi contrasena
+                </button>
+              </div>
+            )}
+
+            {/* Reset sent confirmation */}
+            {resetSent && (
+              <div className="flex items-start gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <AlertCircle className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-green-700 leading-relaxed">
+                  Correo de restablecimiento enviado a <strong>{email}</strong>. Revisa tu bandeja
+                  de entrada (y spam).
+                </p>
+              </div>
+            )}
 
             {/* Error box */}
             {error && (
