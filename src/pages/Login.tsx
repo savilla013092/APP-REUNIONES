@@ -1,12 +1,4 @@
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { auth, db, isFirebaseConfigured } from '@/services/firebase'
@@ -21,7 +13,19 @@ import { doc, setDoc, Timestamp } from 'firebase/firestore'
 import { useState } from 'react'
 import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { useMockLogin } from '@/hooks/useMockLogin'
-import { Badge } from '@/components/ui/badge'
+import {
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  AlertCircle,
+  FileText,
+  Mic,
+  Download,
+  Loader2,
+  User,
+  Sparkles,
+} from 'lucide-react'
 
 export default function Login() {
   const location = useLocation()
@@ -32,6 +36,7 @@ export default function Login() {
   const [displayName, setDisplayName] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const navigate = useNavigate()
   const { loginAsGuest } = useMockLogin()
 
@@ -137,128 +142,310 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-2xl">
-              {isRegisterMode ? 'Crear Cuenta' : 'Iniciar Sesion'}
-            </CardTitle>
-            {!isFirebaseConfigured && (
-              <Badge variant="secondary" className="text-xs">
-                Modo Demo
-              </Badge>
-            )}
+    <div className="min-h-screen flex flex-col lg:flex-row">
+      {/* LEFT PANEL — only desktop */}
+      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12 bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-900 relative overflow-hidden">
+        {/* Decorative blur circles */}
+        <div className="absolute top-[-80px] left-[-80px] w-72 h-72 bg-blue-500/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-[-60px] right-[-60px] w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-1/2 left-1/3 w-48 h-48 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none" />
+
+        {/* Brand */}
+        <div className="relative z-10 flex items-center gap-3">
+          <div className="w-9 h-9 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm border border-white/20">
+            <Sparkles className="w-5 h-5 text-white" />
           </div>
-          <CardDescription>
-            {isFirebaseConfigured
-              ? isRegisterMode
-                ? 'Crea tu cuenta para comenzar a gestionar tus actas'
-                : 'Ingresa a tu cuenta para gestionar tus actas'
-              : 'Firebase no configurado. Usa el boton Invitado para probar la app.'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={isRegisterMode ? handleRegister : handleEmailLogin} className="space-y-4">
+          <span className="text-white font-semibold text-lg tracking-tight">MeetMind AI</span>
+        </div>
+
+        {/* Hero */}
+        <div className="relative z-10 space-y-8">
+          <div className="space-y-4">
+            <h1 className="text-4xl font-bold text-white leading-tight">
+              Transforma tus reuniones en{' '}
+              <span className="text-blue-300">actas profesionales</span>
+            </h1>
+            <p className="text-slate-400 text-lg leading-relaxed">
+              Inteligencia artificial que documenta, organiza y comparte lo que importa de cada
+              reunion.
+            </p>
+          </div>
+          <div className="space-y-4">
+            <div className="flex items-start gap-4">
+              <div className="w-9 h-9 bg-blue-500/20 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 border border-blue-500/30">
+                <FileText className="w-4 h-4 text-blue-300" />
+              </div>
+              <div>
+                <p className="text-white font-medium text-sm">Actas automaticas</p>
+                <p className="text-slate-400 text-sm">
+                  Genera actas estructuradas en segundos con IA
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-4">
+              <div className="w-9 h-9 bg-blue-500/20 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 border border-blue-500/30">
+                <Mic className="w-4 h-4 text-blue-300" />
+              </div>
+              <div>
+                <p className="text-white font-medium text-sm">Transcripcion inteligente</p>
+                <p className="text-slate-400 text-sm">
+                  Convierte audio y notas en texto organizado
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-4">
+              <div className="w-9 h-9 bg-blue-500/20 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 border border-blue-500/30">
+                <Download className="w-4 h-4 text-blue-300" />
+              </div>
+              <div>
+                <p className="text-white font-medium text-sm">Exportacion facil</p>
+                <p className="text-slate-400 text-sm">
+                  Descarga en PDF o comparte con un click
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <p className="relative z-10 text-slate-500 text-xs">
+          © 2026 MeetMind AI. Todos los derechos reservados.
+        </p>
+      </div>
+
+      {/* RIGHT PANEL */}
+      <div className="flex-1 lg:w-1/2 flex items-center justify-center p-6 bg-white min-h-screen lg:min-h-0">
+        <div className="w-full max-w-sm space-y-6">
+          {/* Mobile logo */}
+          <div className="flex lg:hidden items-center gap-2 justify-center mb-2">
+            <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-primary" />
+            </div>
+            <span className="font-semibold text-base tracking-tight">MeetMind AI</span>
+          </div>
+
+          {/* Demo banner */}
+          {!isFirebaseConfigured && (
+            <div className="flex items-start gap-3 p-3 bg-primary/8 border border-primary/20 rounded-lg">
+              <Lock className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-primary/80 leading-relaxed">
+                <span className="font-semibold text-primary">Modo demo activo.</span> Los datos se
+                guardan en tu navegador. Usa el boton{' '}
+                <span className="font-medium">Continuar como Invitado</span> para explorar la app.
+              </p>
+            </div>
+          )}
+
+          {/* Form header */}
+          <div className="space-y-1">
+            <h2 className="text-2xl font-bold text-slate-900">
+              {isRegisterMode ? 'Crear cuenta' : 'Bienvenido de nuevo'}
+            </h2>
+            <p className="text-sm text-slate-500">
+              {isRegisterMode
+                ? 'Completa los datos para comenzar'
+                : 'Ingresa tus datos para continuar'}
+            </p>
+          </div>
+
+          {/* Form */}
+          <form
+            onSubmit={isRegisterMode ? handleRegister : handleEmailLogin}
+            className="space-y-4"
+          >
             {isRegisterMode && (
-              <div className="space-y-2">
-                <Label htmlFor="displayName">Nombre Completo</Label>
-                <Input
-                  id="displayName"
-                  type="text"
-                  placeholder="Juan Perez"
-                  value={displayName}
-                  onChange={e => setDisplayName(e.target.value)}
-                  required
-                  disabled={!isFirebaseConfigured}
-                />
+              <div className="space-y-1.5">
+                <Label htmlFor="displayName" className="text-sm font-medium text-slate-700">
+                  Nombre completo
+                </Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Input
+                    id="displayName"
+                    type="text"
+                    placeholder="Juan Perez"
+                    value={displayName}
+                    onChange={e => setDisplayName(e.target.value)}
+                    required
+                    disabled={!isFirebaseConfigured}
+                    className="pl-9 disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                </div>
+                {!isFirebaseConfigured && (
+                  <p className="text-xs text-slate-400 flex items-center gap-1">
+                    <Lock className="w-3 h-3" />
+                    No disponible en modo demo
+                  </p>
+                )}
               </div>
             )}
-            <div className="space-y-2">
-              <Label htmlFor="email">Correo Electronico</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="tu@ejemplo.com"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                required
-                disabled={!isFirebaseConfigured}
-              />
+
+            <div className="space-y-1.5">
+              <Label htmlFor="email" className="text-sm font-medium text-slate-700">
+                Correo electronico
+              </Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="tu@ejemplo.com"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  required
+                  disabled={!isFirebaseConfigured}
+                  className="pl-9 disabled:opacity-50 disabled:cursor-not-allowed"
+                />
+              </div>
+              {!isFirebaseConfigured && (
+                <p className="text-xs text-slate-400 flex items-center gap-1">
+                  <Lock className="w-3 h-3" />
+                  No disponible en modo demo
+                </p>
+              )}
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Contrasena</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder={isRegisterMode ? 'Minimo 6 caracteres' : ''}
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                required
-                disabled={!isFirebaseConfigured}
-              />
+
+            <div className="space-y-1.5">
+              <Label htmlFor="password" className="text-sm font-medium text-slate-700">
+                Contrasena
+              </Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder={isRegisterMode ? 'Minimo 6 caracteres' : '••••••••'}
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  required
+                  disabled={!isFirebaseConfigured}
+                  className="pl-9 pr-10 disabled:opacity-50 disabled:cursor-not-allowed"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(v => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+                  tabIndex={-1}
+                  aria-label={showPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              {!isFirebaseConfigured && (
+                <p className="text-xs text-slate-400 flex items-center gap-1">
+                  <Lock className="w-3 h-3" />
+                  No disponible en modo demo
+                </p>
+              )}
             </div>
-            {error && <p className="text-sm text-destructive">{error}</p>}
-            <Button type="submit" className="w-full" disabled={loading || !isFirebaseConfigured}>
-              {loading ? 'Cargando...' : isRegisterMode ? 'Crear Cuenta' : 'Entrar'}
+
+            {/* Error box */}
+            {error && (
+              <div className="flex items-start gap-2 p-3 bg-destructive/8 border border-destructive/20 rounded-lg">
+                <AlertCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-destructive leading-relaxed">{error}</p>
+              </div>
+            )}
+
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={loading || !isFirebaseConfigured}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Cargando...
+                </>
+              ) : isRegisterMode ? (
+                'Crear cuenta'
+              ) : (
+                'Entrar'
+              )}
             </Button>
           </form>
-          <div className="relative my-6">
+
+          {/* Separator */}
+          <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t"></span>
+              <span className="w-full border-t border-slate-200" />
             </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">O continua con</span>
+            <div className="relative flex justify-center text-xs">
+              <span className="bg-white px-3 text-slate-400 uppercase tracking-wide">
+                O continua con
+              </span>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+
+          {/* Social buttons */}
+          <div className="grid grid-cols-2 gap-3">
             <Button
               variant="outline"
-              className="w-full"
+              className="w-full gap-2"
               onClick={handleGoogleLogin}
               disabled={loading || !isFirebaseConfigured}
             >
+              {loading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <svg className="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                    fill="#4285F4"
+                  />
+                  <path
+                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                    fill="#34A853"
+                  />
+                  <path
+                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                    fill="#FBBC05"
+                  />
+                  <path
+                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                    fill="#EA4335"
+                  />
+                </svg>
+              )}
               Google
             </Button>
             <Button
-              variant="secondary"
+              variant={isFirebaseConfigured ? 'secondary' : 'default'}
               className="w-full"
               onClick={loginAsGuest}
               disabled={loading}
             >
+              {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
               Invitado
             </Button>
           </div>
-          {!isFirebaseConfigured && (
-            <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-              <p className="text-xs text-amber-800">
-                <strong>Modo Demo:</strong> Los datos se guardan localmente en tu navegador. Para
-                usar Firebase, configura las variables en{' '}
-                <code className="bg-amber-100 px-1 rounded">.env.local</code>
-              </p>
-            </div>
-          )}
-        </CardContent>
-        <CardFooter className="flex justify-center">
-          <p className="text-sm text-muted-foreground">
+
+          {/* Toggle login/register */}
+          <p className="text-center text-sm text-slate-500">
             {isRegisterMode ? (
               <>
                 Ya tienes cuenta?{' '}
-                <Link to="/login" className="text-primary hover:underline">
-                  Inicia Sesion
+                <Link
+                  to="/login"
+                  className="text-primary font-medium hover:underline underline-offset-4"
+                >
+                  Inicia sesion
                 </Link>
               </>
             ) : (
               <>
                 No tienes cuenta?{' '}
-                <Link to="/register" className="text-primary hover:underline">
-                  Registrate
+                <Link
+                  to="/register"
+                  className="text-primary font-medium hover:underline underline-offset-4"
+                >
+                  Registrate gratis
                 </Link>
               </>
             )}
           </p>
-        </CardFooter>
-      </Card>
+        </div>
+      </div>
     </div>
   )
 }
