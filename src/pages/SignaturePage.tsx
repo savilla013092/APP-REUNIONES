@@ -234,6 +234,25 @@ export default function SignaturePage() {
   return (
     <div className="min-h-screen bg-slate-50 py-12 px-6">
       <div className="max-w-2xl mx-auto space-y-8">
+        {/* Logo header */}
+        <div className="flex justify-center">
+          <div className="flex items-center gap-2">
+            <img
+              src="/logo-serviciudad.png"
+              alt="SERVICIUDAD E.S.P."
+              className="w-10 h-10 object-contain"
+            />
+            <div>
+              <span className="font-bold text-base tracking-tight text-slate-900 block">
+                SERVICIUDAD E.S.P.
+              </span>
+              <span className="text-slate-400 text-[10px] tracking-wide">
+                Acueducto · Aseo · Alcantarillado
+              </span>
+            </div>
+          </div>
+        </div>
+
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold tracking-tight">Firma Digital de Acta</h1>
           <p className="text-slate-500">

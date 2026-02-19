@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { onAuthStateChanged } from 'firebase/auth'
+import { onAuthStateChanged, signOut } from 'firebase/auth'
 import { auth, db, isFirebaseConfigured } from '../services/firebase'
 import { doc, getDoc, setDoc, Timestamp } from 'firebase/firestore'
 import type { User } from '../types'
@@ -65,4 +65,12 @@ export const initializeAuth = () => {
     }
     setLoading(false)
   })
+}
+
+export const signOutUser = async () => {
+  const { setUser } = useAuthStore.getState()
+  if (isFirebaseConfigured) {
+    await signOut(auth)
+  }
+  setUser(null)
 }

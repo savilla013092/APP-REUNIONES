@@ -27,6 +27,7 @@ import {
   X,
   CheckCircle2,
   Upload,
+  ArrowLeft,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { MeetingAttendee } from '@/types'
@@ -233,10 +234,18 @@ export default function CreateActa() {
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-8">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => navigate('/dashboard')}
+        className="mb-2 -ml-2 gap-2 text-slate-500"
+      >
+        <ArrowLeft className="h-4 w-4" /> Volver al Dashboard
+      </Button>
       <div className="space-y-2">
         <h1 className="text-3xl font-bold tracking-tight">Crear Nueva Acta</h1>
         <p className="text-muted-foreground text-lg">
-          Sigue los pasos para documentar tu reunión asistido por IA.
+          Sigue los pasos para documentar tu reunion asistido por IA.
         </p>
       </div>
 

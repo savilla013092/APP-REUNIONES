@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { useAuthStore } from '@/hooks/useAuth'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuthStore, signOutUser } from '@/hooks/useAuth'
 import { getOrganizationActas } from '@/services/actas'
 import type { Acta } from '@/types'
 import { Button } from '@/components/ui/button'
@@ -16,6 +16,8 @@ import {
   Users,
   Activity,
   Search,
+  Home,
+  LogOut,
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -24,9 +26,15 @@ import { cn } from '@/lib/utils'
 
 export default function Dashboard() {
   const { user } = useAuthStore()
+  const navigate = useNavigate()
   const [actas, setActas] = useState<Acta[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+
+  const handleSignOut = async () => {
+    await signOutUser()
+    navigate('/login')
+  }
 
   useEffect(() => {
     if (user?.organizationId) {
@@ -75,10 +83,19 @@ export default function Dashboard() {
       {/* Sidebar Desktop */}
       <aside className="hidden lg:flex w-64 bg-white border-r flex-col p-6 space-y-8">
         <div className="flex items-center gap-2 px-2">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold">
-            M
+          <img
+            src="/logo-serviciudad.png"
+            alt="SERVICIUDAD E.S.P."
+            className="w-8 h-8 object-contain"
+          />
+          <div>
+            <span className="font-bold text-sm tracking-tight leading-tight block">
+              SERVICIUDAD E.S.P.
+            </span>
+            <span className="text-slate-400 text-[10px] tracking-wide">
+              Acueducto · Aseo · Alcantarillado
+            </span>
           </div>
-          <span className="font-bold text-xl tracking-tight">MeetMind AI</span>
         </div>
 
         <nav className="space-y-1">
@@ -99,14 +116,20 @@ export default function Dashboard() {
           </Button>
         </nav>
 
-        <div className="mt-auto p-4 bg-slate-100 rounded-xl space-y-3">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Plan Pro</p>
-          <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
-            <div className="h-full bg-primary w-[75%]" />
-          </div>
-          <p className="text-[10px] text-slate-500">75% del almacenamiento usado</p>
-          <Button size="sm" className="w-full text-xs" variant="outline">
-            Mejorar Plan
+        <div className="mt-auto space-y-2">
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-3 text-slate-500"
+            onClick={() => navigate('/')}
+          >
+            <Home className="h-4 w-4" /> Ir al inicio
+          </Button>
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-3 text-slate-500 hover:text-destructive hover:bg-destructive/10"
+            onClick={handleSignOut}
+          >
+            <LogOut className="h-4 w-4" /> Cerrar sesion
           </Button>
         </div>
       </aside>

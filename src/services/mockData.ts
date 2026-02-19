@@ -9,7 +9,7 @@ export const isDemoMode = (): boolean => {
 // Mock user for demo mode
 export const MOCK_USER = {
   id: 'demo-user-001',
-  email: 'demo@meetmind.app',
+  email: 'almacenista@serviciudad.gov.co',
   displayName: 'Usuario Demo',
   organizationId: 'demo-org-001',
   role: 'admin' as const,
@@ -18,7 +18,7 @@ export const MOCK_USER = {
 }
 
 // Local storage key
-const ACTAS_STORAGE_KEY = 'meetmind_demo_actas'
+const ACTAS_STORAGE_KEY = 'serviciudad_demo_actas'
 
 // Sample actas for demo
 const sampleActas: Omit<Acta, 'id'>[] = [
@@ -188,7 +188,7 @@ const deserializeActaFromStorage = (acta: any): Acta => {
 
 // Version for data format - increment when structure changes
 const DATA_VERSION = 'v2'
-const VERSION_KEY = 'meetmind_demo_version'
+const VERSION_KEY = 'serviciudad_demo_version'
 
 // Initialize demo data in localStorage
 export const initializeDemoData = (): void => {
