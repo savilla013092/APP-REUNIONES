@@ -5,7 +5,6 @@ import {
   Packer,
   Paragraph,
   TextRun,
-  HeadingLevel,
   Table,
   TableRow,
   TableCell,
@@ -14,6 +13,7 @@ import {
   ImageRun,
   ShadingType,
   VerticalAlign,
+  BorderStyle,
 } from 'docx'
 import { saveAs } from 'file-saver'
 import type { Acta } from '../types'
@@ -88,7 +88,7 @@ const sectionTitle = (text: string) =>
     children: [new TextRun({ text, bold: true, color: '1E3A8A', size: 22 })],
     spacing: { before: 320, after: 120 },
     border: {
-      bottom: { value: 'single', size: 6, space: 4, color: '2563EB' },
+      bottom: { style: BorderStyle.SINGLE, size: 6, space: 4, color: '2563EB' },
     },
   })
 
